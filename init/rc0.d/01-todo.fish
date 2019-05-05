@@ -1,10 +1,10 @@
-function td
-    $DOTFILES/tools/todo/todo.sh -N
+function t
+    task $argv[1..-1]
 end
 
-function task
+function t_create -a title
     set -l TODAY (date --iso-8601)
-    td add "$TODAY $argv[1]"
+    td add "$TODAY $title $argv[2..-1]"
 end
 
 abbr --add did 'td do' # add line number of task
