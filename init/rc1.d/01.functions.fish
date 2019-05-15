@@ -31,8 +31,12 @@ function t -d 'main dispatcher function for fishdots todo'
       emit task_report_priority
     case lnp
       emit task_report_priority_for_current_project
+    case d
+      emit task_completed $argv[2]
     case did
       emit task_completed $argv[2]
+    case h
+      emit task_home
     case home
       emit task_home
     case l
@@ -46,10 +50,12 @@ function t -d 'main dispatcher function for fishdots todo'
     case new
       emit task_new $argv[2] $argv[3..-1]
     case ap
-      emit task_new 'project:$CURRENT_PROJECT_SN' 'pri:L' $argv[2] $argv[3..-1]
+      emit task_project_new $argv[2]
+    case s
+      emit task_sync
     case sync
       emit task_sync
-    case recent
+    case rs
       emit task_recent
     case '*'
       t_help
@@ -59,37 +65,41 @@ end
 function t_help -d "display usage info"
   echo "Fishdots Tasks Usage"
   echo "===================="
-  echo "t <command> [options] [args]"
+  echo "t <command> [args]"
   echo ""
-  echo "mnemonics:"
-  echo "  a: add/new"
-  echo "  d: did"
-  echo "  l: list"
-  echo "  p: project scope"
-  echo "  r: report"
-  echo "  t: tags"
-  echo "  b: burndown"
-  echo "  d: daily (if after b)"
-  echo "  w: weekly (if after b)"
+  echo "
+Mnemonics:
+  h: home
+  a: add/new
+    p: project scope
+  l: list
+    p: project scope
+    n: list by priority order
+  d: did
+  r: report
+    s: standup
+    t: tags
+    p: projects
+    b: burndown
+      d: daily (if after b)
+      w: weekly (if after b)
   
-  t_option 'did <Task No.>' 'mark task as complete' 
-  t_option 'home' 'cd to the tasks root folder' 
-  t_option 'ls' 'list all tasks' 
-  t_option 'pls' 'list all tasks' 
-  t_option 'new' 'create a new task' 
-  t_option 'pnew' 'create a new task tagged by current project' 
-  t_option 'sync' 'push all tasks to repo' 
-  t_option 'recent' 'get recently completed tasks (from last 24 hrs)'
+  "
 end
 
-complete -c t -x -a 'did' -d 'mark task as complete' 
-complete -c t -x -a 'home' -d 'cd to the task root folder' 
-complete -c t -x -a 'ls' -d 'list all tasks' 
-complete -c t -x -a 'pls' -d 'list all tasks' 
-complete -c t -x -a 'new' -d 'create a new task' 
-complete -c t -x -a 'pnew' -d 'create a new task tagged by current project' 
+complete -c t -x -a 'd' -d 'mark task as complete' 
+complete -c t -x -a 'h' -d 'cd to the task root folder' 
+complete -c t -x -a 'l' -d 'list all tasks' 
+complete -c t -x -a 'lp' -d 'list all project tasks' 
+complete -c t -x -a 'ln' -d 'list all tasks by priority order' 
+complete -c t -x -a 'a' -d 'create a new task' 
+complete -c t -x -a 'ap' -d 'create a new task tagged by current project' 
 complete -c t -x -a 'sync' -d 'push all changes to repo' 
-complete -c t -x -a 'recent' -d  'get recently completed tasks (from last 24 hrs)'
+complete -c t -x -a 'rs' -d  'standup report - recently closed'
+complete -c t -x -a 'rt' -d  'list all tags'
+complete -c t -x -a 'rp' -d  'list projects'
+complete -c t -x -a 'rbd' -d  'daily burndown report'
+complete -c t -x -a 'rbw' -d  'weekly burndown report'
 
 function t_option -a name desc -d 'helper function for displaying usage info'
   colour_print cyan 't '
@@ -107,15 +117,15 @@ function t_home -e task_home -d 'go to task dir'
 end
 
 function t_create -e task_new -a title
-  task add "$title" $argv[2..-1]
+  task add "$title" $argv[3..-1]
 end
 
 function t_project_create -e task_project_new -a title -d 'create a task tagged to the current project'
-  task add "$title" "pro:$CURRENT_PROJECT_SN" $argv[2..-1]
+  task add "$title" "pro:$CURRENT_PROJECT_SN" "pri:M"
 end
 
 function t_list -e task_list
-  task list
+  task min
 end
 
 function t_recent -e task_recent -d 'get recently completed tasks (from last 24 hrs)'
