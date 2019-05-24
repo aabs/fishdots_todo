@@ -19,20 +19,16 @@ function t -d 'main dispatcher function for fishdots todo'
     return
   end
   switch $argv[1]
-    case rbd
-      emit task_report_daily_bd
-    case rbw
-      emit task_report_weekly_bd
-    case rt
-      emit task_report_tags
-    case rp
-      emit task_report_projects
-    case ln
-      emit task_report_priority
-    case lnp
-      emit task_report_priority_for_current_project
-    case d
+    case a
+      emit task_new $argv[2] # $argv[3..-1]
+    case add
+      emit task_new $argv[2] $argv[3..-1]
+    case ap
+      emit task_project_new $argv[2]
+    case c
       emit task_completed $argv[2]
+    case d
+      emit task_deleted $argv[2]
     case did
       emit task_completed $argv[2]
     case h
@@ -41,22 +37,28 @@ function t -d 'main dispatcher function for fishdots todo'
       emit task_home
     case l
       emit task_list
+    case ln
+      emit task_report_priority
+    case lnp
+      emit task_report_priority_for_current_project
     case lp
       emit task_list_project
-    case a
-      emit task_new $argv[2] $argv[3..-1]
-    case add
-      emit task_new $argv[2] $argv[3..-1]
     case new
       emit task_new $argv[2] $argv[3..-1]
-    case ap
-      emit task_project_new $argv[2]
+    case rbd
+      emit task_report_daily_bd
+    case rbw
+      emit task_report_weekly_bd
+    case rt
+      emit task_report_tags
+    case rp
+      emit task_report_projects
+    case rs
+      emit task_recent
     case s
       emit task_sync
     case sync
       emit task_sync
-    case rs
-      emit task_recent
     case '*'
       t_help
   end
@@ -75,7 +77,8 @@ Mnemonics:
   l: list
     p: project scope
     n: list by priority order
-  d: did
+  c: completed
+  d: delete
   r: report
     s: standup
     t: tags
@@ -87,7 +90,8 @@ Mnemonics:
   "
 end
 
-complete -c t -x -a 'd' -d 'mark task as complete' 
+complete -c t -x -a 'c' -d 'mark task as complete' 
+complete -c t -x -a 'd' -d 'delete task' 
 complete -c t -x -a 'h' -d 'cd to the task root folder' 
 complete -c t -x -a 'l' -d 'list all tasks' 
 complete -c t -x -a 'lp' -d 'list all project tasks' 
@@ -108,6 +112,10 @@ function t_option -a name desc -d 'helper function for displaying usage info'
   echo; echo
 end
 
+function t_del -e task_deleted -a taskno
+  task rm $taskno
+end
+
 function t_did -e task_completed -a taskno
   task $taskno done
 end
@@ -117,7 +125,7 @@ function t_home -e task_home -d 'go to task dir'
 end
 
 function t_create -e task_new -a title
-  task add "$title" $argv[3..-1]
+  task add "$title"
 end
 
 function t_project_create -e task_project_new -a title -d 'create a task tagged to the current project'
